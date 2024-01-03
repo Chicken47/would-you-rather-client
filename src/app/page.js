@@ -14,14 +14,15 @@ export default function Home() {
     selftext: "",
     options: [],
   });
+  const [type, setType] = useState("new");
   const poll_length = wyrData.options.length;
   const numberOfCards = poll_length;
   switch (numberOfCards) {
     case 2:
-      cardClass = "w-[48%] ";
+      cardClass = "w-[48%] text-[1.5vw]";
       break;
     case 3:
-      cardClass = "w-[30%]";
+      cardClass = "w-[30%] text-[1.5vw]";
       break;
     case 4:
       cardClass = " w-[48%]";
@@ -39,7 +40,7 @@ export default function Home() {
   useEffect(() => {
     console.log("lmfao");
     const data = {
-      type: "top",
+      type: type,
     };
     axios.post("http://localhost:8080/v1/get/wyrs", data).then((response) => {
       console.log("haha");
@@ -47,16 +48,18 @@ export default function Home() {
       setWyrData({
         question: questions[currentQuestionIndex].data.title,
         selftext: questions[currentQuestionIndex].data.selftext_html,
-        options: questions[currentQuestionIndex].data.poll_data?.options.map(
-          (option) => option?.text
-        ),
+        options: questions[currentQuestionIndex].data.poll_data
+          ? questions[currentQuestionIndex].data.poll_data?.options.map(
+              (option) => option?.text
+            )
+          : [],
       });
     });
-  }, [currentQuestionIndex]);
+  }, [currentQuestionIndex, type]);
 
-  console.log("wyrdata", wyrData);
+  console.log("wyrdata", wyrData.options);
   let htmlDecoded = he.decode(wyrData.selftext);
-
+  console.log(htmlDecoded.split(`<p><a href="https://www.reddit.`)[0].length);
   return (
     <div className="w-screen flex flex-col items-center overflow-hidden h-screen bg-[#FFE8D6]">
       <div
@@ -81,21 +84,30 @@ export default function Home() {
         }}
       />
       <div className="z-50 flex justify-center w-full py-5">
-        <Header />
+        <Header type={type} setType={setType} />
       </div>
-      <div className="flex flex-col h-full max-w-[1100px] justify-evenly z-50 items-center">
+      <div className="flex flex-col h-full max-w-[1100px] w-[1000px] justify-evenly z-50 items-center">
         <div className="flex w-full p-3 max-h-[40vh]">
-          <div className="flex flex-col w-[90%] py-5 px-8 space-y-5 border-black border rounded-xl">
+          <div className="flex flex-col w-full px-8 py-5 space-y-5 border border-black rounded-xl">
             <div className="text-lg font-bold">{wyrData.question}</div>
-            <div className="w-full border-b border-black " />
-            <div
-              className="overflow-y-scroll"
-              dangerouslySetInnerHTML={{ __html: htmlDecoded }}
-            >
-              {/* {wyrData.selftext} */}
-            </div>
+            {htmlDecoded.split(`<p><a href="https://www.reddit.`)[0].length !==
+              31 && (
+              <>
+                <div className="w-full border-b border-black " />
+                <div
+                  className="overflow-y-scroll"
+                  dangerouslySetInnerHTML={{
+                    __html: htmlDecoded.split(
+                      `<p><a href="https://www.reddit.`
+                    )[0],
+                  }}
+                >
+                  {/* {wyrData.selftext} */}
+                </div>
+              </>
+            )}
           </div>
-          <div className="w-[10%] flex justify-center space-x-3 pt-5 h-full">
+          {/* <div className="w-[10%] flex justify-center space-x-3 pt-5 h-full">
             <BookmarkBorderOutlined
               sx={{ fontSize: "40px" }}
               className="transition-all duration-300 cursor-pointer hover:scale-125"
@@ -104,16 +116,25 @@ export default function Home() {
               sx={{ fontSize: "40px" }}
               className="transition-all duration-300 cursor-pointer hover:scale-125"
             />
-          </div>
+          </div> */}
         </div>
+        {wyrData.options.length === 0 && (
+          <div
+            onClick={() => setCurrentQuestionIndex(currentQuestionIndex + 1)}
+            className="px-3 py-2 border border-black rounded cursor-pointer"
+          >
+            Next
+          </div>
+        )}
         <div className="flex flex-wrap justify-evenly w-full h-[45vh] overflow-y-scroll z-50 p-3">
-          {wyrData.options.map((option) => {
+          {wyrData.options.map((option, idx) => {
             return (
               <div
+                key={idx}
                 onClick={() =>
                   setCurrentQuestionIndex(currentQuestionIndex + 1)
                 }
-                className={`${cardClass} my-2 cursor-pointer rounded-lg flex justify-center items-center h-10/12 bg-[#00000027] hover:bg-[#00000074] hover:text-white transition-all`}
+                className={`${cardClass} my-2 cursor-pointer p-2 text-center rounded-lg flex justify-center items-center h-10/12 bg-[#00000027] hover:bg-[#00000074] hover:text-white transition-all`}
               >
                 {option}
               </div>
