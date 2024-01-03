@@ -1,29 +1,61 @@
+"use client";
+
 import { BookmarkBorderOutlined, ShareOutlined } from "@mui/icons-material";
 import Header from "./components/Header";
-import RatherCard from "./components/RatherCard";
+import { useEffect, useState } from "react";
+import axios from "axios";
+import he from "he";
 
 export default function Home() {
   let cardClass = "";
-  const numberOfCards = 2;
+  const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+  const [wyrData, setWyrData] = useState({
+    question: "",
+    selftext: "",
+    options: [],
+  });
+  const poll_length = wyrData.options.length;
+  const numberOfCards = poll_length;
   switch (numberOfCards) {
     case 2:
-      cardClass = "w-[48%] flex-wrap"; // 2 cards, side by side
+      cardClass = "w-[48%] ";
       break;
     case 3:
-      cardClass = "flex-row w-[30%]"; // 3 cards, side by side
+      cardClass = "w-[30%]";
       break;
     case 4:
-      cardClass = "flex-wrap w-[48%]"; // 4 cards, in two rows of 2
+      cardClass = " w-[48%]";
       break;
     case 5:
-      cardClass = "flex-wrap w-[30%]"; // 5 cards, in two rows (2 on top, 3 on bottom)
+      cardClass = " w-[30%]";
       break;
     case 6:
-      cardClass = "flex-wrap w-[30%]"; // 6 cards, in two rows of 3
+      cardClass = " w-[30%]";
       break;
     default:
-      cardClass = "flex-wrap"; // Default to flex-wrap
+      cardClass = "";
   }
+
+  useEffect(() => {
+    console.log("lmfao");
+    const data = {
+      type: "top",
+    };
+    axios.post("http://localhost:8080/v1/get/wyrs", data).then((response) => {
+      console.log("haha");
+      const questions = response.data.data.children;
+      setWyrData({
+        question: questions[currentQuestionIndex].data.title,
+        selftext: questions[currentQuestionIndex].data.selftext_html,
+        options: questions[currentQuestionIndex].data.poll_data?.options.map(
+          (option) => option?.text
+        ),
+      });
+    });
+  }, [currentQuestionIndex]);
+
+  console.log("wyrdata", wyrData);
+  let htmlDecoded = he.decode(wyrData.selftext);
 
   return (
     <div className="w-screen flex flex-col items-center overflow-hidden h-screen bg-[#FFE8D6]">
@@ -54,18 +86,13 @@ export default function Home() {
       <div className="flex flex-col h-full max-w-[1100px] justify-evenly z-50 items-center">
         <div className="flex w-full p-3 max-h-[40vh]">
           <div className="flex flex-col w-[90%] py-5 px-8 space-y-5 border-black border rounded-xl">
-            <div className="text-lg font-bold">
-              Santa has decided to hold a prize draw this year and you're the
-              lucky winner! He is asking you to pick one of the items from a
-              list. Which gift would you rather receive for Christmas?
-            </div>
+            <div className="text-lg font-bold">{wyrData.question}</div>
             <div className="w-full border-b border-black " />
-            <div className="overflow-y-scroll">
-              Santa has decided to hold a prize draw this year and you're the
-              lucky winner! He is asking you to pick one of the items from a
-              list. Which gift would you rather receive for Christmas?Santa has
-              decided to hold a prize draw this year and you're the lucky
-              winner! He is asking you to pick one of the items from a list.
+            <div
+              className="overflow-y-scroll"
+              dangerouslySetInnerHTML={{ __html: htmlDecoded }}
+            >
+              {/* {wyrData.selftext} */}
             </div>
           </div>
           <div className="w-[10%] flex justify-center space-x-3 pt-5 h-full">
@@ -79,16 +106,19 @@ export default function Home() {
             />
           </div>
         </div>
-        <div className="flex flex-wrap justify-between w-full h-[45vh] overflow-y-scroll z-50 p-3">
-          <div className="w-[32%] my-2 rounded-lg flex justify-center items-center h-10/12 bg-[#00000027]">
-            Akshit
-          </div>
-          <div className="w-[32%] my-2 rounded-lg flex justify-center items-center h-10/12 bg-[#00000027]">
-            Akshit
-          </div>
-          <div className="w-[32%] my-2 rounded-lg flex justify-center items-center h-10/12 bg-[#00000027]">
-            Akshit
-          </div>
+        <div className="flex flex-wrap justify-evenly w-full h-[45vh] overflow-y-scroll z-50 p-3">
+          {wyrData.options.map((option) => {
+            return (
+              <div
+                onClick={() =>
+                  setCurrentQuestionIndex(currentQuestionIndex + 1)
+                }
+                className={`${cardClass} my-2 cursor-pointer rounded-lg flex justify-center items-center h-10/12 bg-[#00000027] hover:bg-[#00000074] hover:text-white transition-all`}
+              >
+                {option}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>
